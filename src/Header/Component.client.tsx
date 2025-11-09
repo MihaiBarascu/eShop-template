@@ -75,7 +75,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         className="bg-gray-dark sticky top-0 z-50"
         {...(theme ? { 'data-theme': theme } : {})}
       >
-        <div className="container mx-auto flex justify-between items-center py-4 max-w-8/12">
+        <div className="container mx-auto flex justify-between items-center py-4 xl:max-w-8/12">
           <Link href="/" className="flex items-center">
             {data.logo && typeof data.logo === 'object' && (
               <Image
