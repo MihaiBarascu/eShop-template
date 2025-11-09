@@ -1634,6 +1634,10 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface Header {
   id: string;
+  /**
+   * Upload the site logo
+   */
+  logo?: (string | null) | Media;
   navItems?:
     | {
         link: {
@@ -1651,9 +1655,34 @@ export interface Header {
           url?: string | null;
           label: string;
         };
+        hasDropdown?: boolean | null;
+        dropdownItems?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?:
+                  | ({
+                      relationTo: 'pages';
+                      value: string | Page;
+                    } | null)
+                  | ({
+                      relationTo: 'posts';
+                      value: string | Post;
+                    } | null);
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
+  searchSettings?: {
+    showSearch?: boolean | null;
+    searchPlaceholder?: string | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1691,6 +1720,7 @@ export interface Footer {
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
+  logo?: T;
   navItems?:
     | T
     | {
@@ -1703,7 +1733,28 @@ export interface HeaderSelect<T extends boolean = true> {
               url?: T;
               label?: T;
             };
+        hasDropdown?: T;
+        dropdownItems?:
+          | T
+          | {
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
+            };
         id?: T;
+      };
+  searchSettings?:
+    | T
+    | {
+        showSearch?: T;
+        searchPlaceholder?: T;
       };
   updatedAt?: T;
   createdAt?: T;

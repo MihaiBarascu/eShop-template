@@ -1,7 +1,14 @@
-import type { CollectionSlug, File, GlobalSlug, Payload, PayloadRequest } from 'payload'
+import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest, File } from 'payload'
 
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
+import { home } from './home'
+import { image1 } from './image-1'
+import { image2 } from './image-2'
+import { imageHero1 } from './image-hero-1'
+import { post1 } from './post-1'
+import { post2 } from './post-2'
+import { post3 } from './post-3'
 
 const collections: CollectionSlug[] = [
   'categories',
@@ -38,36 +45,18 @@ export const seed = async ({
 
   // clear the database
   await Promise.all(
-    globals.map((global) => {
-      if (global === 'header') {
-        return payload.updateGlobal({
-          slug: global,
-          data: {
-            logo: null,
-            navItems: [],
-            searchSettings: {
-              showSearch: false,
-              searchPlaceholder: '',
-            },
-          },
-          depth: 0,
-          context: {
-            disableRevalidate: true,
-          },
-        })
-      } else {
-        return payload.updateGlobal({
-          slug: global,
-          data: {
-            navItems: [],
-          },
-          depth: 0,
-          context: {
-            disableRevalidate: true,
-          },
-        })
-      }
-    }),
+    globals.map((global) =>
+      payload.updateGlobal({
+        slug: global,
+        data: {
+          navItems: [],
+        },
+        depth: 0,
+        context: {
+          disableRevalidate: true,
+        },
+      }),
+    ),
   )
 
   await Promise.all(
@@ -92,7 +81,24 @@ export const seed = async ({
     },
   })
 
-  const [demoAuthor, image1Doc] = await Promise.all([
+  payload.logger.info(`— Seeding media...`)
+
+  const [image1Buffer, image2Buffer, image3Buffer, hero1Buffer] = await Promise.all([
+    fetchFileByURL(
+      'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-post1.webp',
+    ),
+    fetchFileByURL(
+      'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-post2.webp',
+    ),
+    fetchFileByURL(
+      'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-post3.webp',
+    ),
+    fetchFileByURL(
+      'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-hero1.webp',
+    ),
+  ])
+
+  const [demoAuthor, image1Doc, image2Doc, image3Doc, imageHomeDoc] = await Promise.all([
     payload.create({
       collection: 'users',
       data: {
@@ -101,7 +107,26 @@ export const seed = async ({
         password: 'password',
       },
     }),
-
+    payload.create({
+      collection: 'media',
+      data: image1,
+      file: image1Buffer,
+    }),
+    payload.create({
+      collection: 'media',
+      data: image2,
+      file: image2Buffer,
+    }),
+    payload.create({
+      collection: 'media',
+      data: image2,
+      file: image3Buffer,
+    }),
+    payload.create({
+      collection: 'media',
+      data: imageHero1,
+      file: hero1Buffer,
+    }),
     categories.map((category) =>
       payload.create({
         collection: 'categories',
@@ -113,6 +138,62 @@ export const seed = async ({
     ),
   ])
 
+  payload.logger.info(`— Seeding posts...`)
+
+  // Do not create posts with `Promise.all` because we want the posts to be created in order
+  // This way we can sort them by `createdAt` or `publishedAt` and they will be in the expected order
+  const post1Doc = await payload.create({
+    collection: 'posts',
+    depth: 0,
+    context: {
+      disableRevalidate: true,
+    },
+    data: post1({ heroImage: image1Doc, blockImage: image2Doc, author: demoAuthor }),
+  })
+
+  const post2Doc = await payload.create({
+    collection: 'posts',
+    depth: 0,
+    context: {
+      disableRevalidate: true,
+    },
+    data: post2({ heroImage: image2Doc, blockImage: image3Doc, author: demoAuthor }),
+  })
+
+  const post3Doc = await payload.create({
+    collection: 'posts',
+    depth: 0,
+    context: {
+      disableRevalidate: true,
+    },
+    data: post3({ heroImage: image3Doc, blockImage: image1Doc, author: demoAuthor }),
+  })
+
+  // update each post with related posts
+  await payload.update({
+    id: post1Doc.id,
+    collection: 'posts',
+    data: {
+      relatedPosts: [post2Doc.id, post3Doc.id],
+    },
+  })
+  await payload.update({
+    id: post2Doc.id,
+    collection: 'posts',
+    data: {
+      relatedPosts: [post1Doc.id, post3Doc.id],
+    },
+  })
+  await payload.update({
+    id: post3Doc.id,
+    collection: 'posts',
+    data: {
+      relatedPosts: [post1Doc.id, post2Doc.id],
+    },
+  })
+
+  payload.logger.info(`— Seeding contact form...`)
+
   const contactForm = await payload.create({
     collection: 'forms',
     depth: 0,
@@ -121,7 +202,12 @@ export const seed = async ({
 
   payload.logger.info(`— Seeding pages...`)
 
-  const [contactPage] = await Promise.all([
+  const [_, contactPage] = await Promise.all([
+    payload.create({
+      collection: 'pages',
+      depth: 0,
+      data: home({ heroImage: imageHomeDoc, metaImage: image2Doc }),
+    }),
     payload.create({
       collection: 'pages',
       depth: 0,
@@ -135,93 +221,13 @@ export const seed = async ({
     payload.updateGlobal({
       slug: 'header',
       data: {
-        logo: null,
         navItems: [
           {
             link: {
               type: 'custom',
-              label: 'Acasă',
-              url: '/',
+              label: 'Posts',
+              url: '/posts',
             },
-            hasDropdown: false,
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Bărbați',
-              url: '/barbati',
-            },
-            hasDropdown: true,
-            dropdownItems: [
-              {
-                link: {
-                  type: 'custom',
-                  label: 'Tricouri',
-                  url: '/barbati/tricouri',
-                },
-              },
-              {
-                link: {
-                  type: 'custom',
-                  label: 'Pantaloni',
-                  url: '/barbati/pantaloni',
-                },
-              },
-              {
-                link: {
-                  type: 'custom',
-                  label: 'Costume',
-                  url: '/barbati/costume',
-                },
-              },
-            ],
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Femei',
-              url: '/femei',
-            },
-            hasDropdown: true,
-            dropdownItems: [
-              {
-                link: {
-                  type: 'custom',
-                  label: 'Rochii',
-                  url: '/femei/rochii',
-                },
-              },
-              {
-                link: {
-                  type: 'custom',
-                  label: 'Bluze',
-                  url: '/femei/bluze',
-                },
-              },
-              {
-                link: {
-                  type: 'custom',
-                  label: 'Pantaloni',
-                  url: '/femei/pantaloni',
-                },
-              },
-            ],
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Magazin',
-              url: '/magazin',
-            },
-            hasDropdown: false,
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Produse',
-              url: '/produse',
-            },
-            hasDropdown: false,
           },
           {
             link: {
@@ -232,13 +238,8 @@ export const seed = async ({
                 value: contactPage.id,
               },
             },
-            hasDropdown: false,
           },
         ],
-        searchSettings: {
-          showSearch: true,
-          searchPlaceholder: 'Caută produse...',
-        },
       },
     }),
     payload.updateGlobal({
