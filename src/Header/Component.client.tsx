@@ -79,7 +79,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
           <Link href="/" className="flex items-center">
             {data.logo && typeof data.logo === 'object' && (
               <Image
-                src={(data.logo as Media).url || '/assets/images/template-white-logo.png'}
+                src={(data.logo as Media).url || '/template-white-logo.png'}
                 alt="Logo"
                 width={325}
                 height={104}
@@ -89,7 +89,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
             )}
             {!data.logo && (
               <Image
-                src="/assets/images/template-white-logo.png"
+                src="/template-white-logo.png"
                 alt="Logo"
                 width={325}
                 height={104}

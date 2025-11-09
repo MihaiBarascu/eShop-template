@@ -71,7 +71,9 @@ export interface Config {
     posts: Post;
     media: Media;
     categories: Category;
+    products: Product;
     users: User;
+    orders: Order;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -93,7 +95,9 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -399,7 +403,17 @@ export interface Category {
    */
   generateSlug?: boolean | null;
   slug: string;
+  description?: string | null;
+  image?: (string | null) | Media;
+  /**
+   * Parent category for hierarchical structure
+   */
   parent?: (string | null) | Category;
+  /**
+   * Show this category on homepage
+   */
+  featured?: boolean | null;
+  status?: ('active' | 'inactive') | null;
   breadcrumbs?:
     | {
         doc?: (string | null) | Category;
@@ -780,6 +794,104 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  name: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  price: number;
+  /**
+   * Sale price (optional)
+   */
+  salePrice?: number | null;
+  /**
+   * Stock Keeping Unit
+   */
+  sku?: string | null;
+  category: string | Category;
+  images?:
+    | {
+        image: string | Media;
+        alt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Show this product on homepage
+   */
+  featured?: boolean | null;
+  status?: ('active' | 'inactive' | 'out-of-stock') | null;
+  inventory?: {
+    quantity?: number | null;
+    trackQuantity?: boolean | null;
+  };
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    keywords?: string | null;
+  };
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: string;
+  orderNumber: string;
+  customer: string | User;
+  items: {
+    product: string | Product;
+    quantity: number;
+    price: number;
+    id?: string | null;
+  }[];
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    address1: string;
+    address2?: string | null;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+  paymentMethod: 'credit-card' | 'paypal' | 'bank-transfer' | 'cod';
+  /**
+   * Internal notes about this order
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -985,8 +1097,16 @@ export interface PayloadLockedDocument {
         value: string | Category;
       } | null)
     | ({
+        relationTo: 'products';
+        value: string | Product;
+      } | null)
+    | ({
         relationTo: 'users';
         value: string | User;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: string | Order;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1318,7 +1438,11 @@ export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
   generateSlug?: T;
   slug?: T;
+  description?: T;
+  image?: T;
   parent?: T;
+  featured?: T;
+  status?: T;
   breadcrumbs?:
     | T
     | {
@@ -1327,6 +1451,44 @@ export interface CategoriesSelect<T extends boolean = true> {
         label?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  price?: T;
+  salePrice?: T;
+  sku?: T;
+  category?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        alt?: T;
+        id?: T;
+      };
+  featured?: T;
+  status?: T;
+  inventory?:
+    | T
+    | {
+        quantity?: T;
+        trackQuantity?: T;
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        keywords?: T;
+      };
+  generateSlug?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1352,6 +1514,43 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  orderNumber?: T;
+  customer?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        price?: T;
+        id?: T;
+      };
+  shippingAddress?:
+    | T
+    | {
+        firstName?: T;
+        lastName?: T;
+        address1?: T;
+        address2?: T;
+        city?: T;
+        state?: T;
+        zip?: T;
+        country?: T;
+      };
+  subtotal?: T;
+  shipping?: T;
+  tax?: T;
+  total?: T;
+  status?: T;
+  paymentMethod?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1692,7 +1891,56 @@ export interface Header {
  */
 export interface Footer {
   id: string;
-  navItems?:
+  /**
+   * Upload a logo for the footer
+   */
+  logo?: (string | null) | Media;
+  columns?:
+    | {
+        title: string;
+        links?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?:
+                  | ({
+                      relationTo: 'pages';
+                      value: string | Page;
+                    } | null)
+                  | ({
+                      relationTo: 'posts';
+                      value: string | Post;
+                    } | null);
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  socialLinks?:
+    | {
+        platform: 'facebook' | 'twitter' | 'instagram' | 'pinterest' | 'youtube' | 'linkedin';
+        url: string;
+        /**
+         * Optional custom icon (SVG recommended)
+         */
+        icon?: (string | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  contactAddress?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  /**
+   * Brief description about your shop
+   */
+  description?: string | null;
+  copyrightText?: string | null;
+  legalLinks?:
     | {
         link: {
           type?: ('reference' | 'custom') | null;
@@ -1709,6 +1957,16 @@ export interface Footer {
           url?: string | null;
           label: string;
         };
+        id?: string | null;
+      }[]
+    | null;
+  paymentIcons?:
+    | {
+        name: string;
+        /**
+         * Payment method icon (SVG/PNG)
+         */
+        icon: string | Media;
         id?: string | null;
       }[]
     | null;
@@ -1765,7 +2023,41 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
-  navItems?:
+  logo?: T;
+  columns?:
+    | T
+    | {
+        title?: T;
+        links?:
+          | T
+          | {
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
+  socialLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        icon?: T;
+        id?: T;
+      };
+  contactAddress?: T;
+  contactPhone?: T;
+  contactEmail?: T;
+  description?: T;
+  copyrightText?: T;
+  legalLinks?:
     | T
     | {
         link?:
@@ -1777,6 +2069,13 @@ export interface FooterSelect<T extends boolean = true> {
               url?: T;
               label?: T;
             };
+        id?: T;
+      };
+  paymentIcons?:
+    | T
+    | {
+        name?: T;
+        icon?: T;
         id?: T;
       };
   updatedAt?: T;
