@@ -831,6 +831,13 @@ export interface Product {
         id?: string | null;
       }[]
     | null;
+  sizes?: ('xs' | 's' | 'm' | 'l' | 'xl' | 'xxl')[] | null;
+  colors?: ('red' | 'blue' | 'green' | 'black' | 'white' | 'gray' | 'yellow' | 'pink')[] | null;
+  brand?: ('nike' | 'adidas' | 'puma' | 'under-armour' | 'new-balance' | 'reebok') | null;
+  /**
+   * Average rating (0-5 stars)
+   */
+  rating?: number | null;
   /**
    * Show this product on homepage
    */
@@ -1472,6 +1479,10 @@ export interface ProductsSelect<T extends boolean = true> {
         alt?: T;
         id?: T;
       };
+  sizes?: T;
+  colors?: T;
+  brand?: T;
+  rating?: T;
   featured?: T;
   status?: T;
   inventory?:

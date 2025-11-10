@@ -1,4 +1,4 @@
-import type { CollectionSlug, File, GlobalSlug, Payload, PayloadRequest } from 'payload'
+import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest } from 'payload'
 
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
@@ -31,6 +31,21 @@ export const seed = async ({
 }): Promise<void> => {
   payload.logger.info('Seeding database...')
 
+  // Ensure database connection is stable
+  try {
+    if (payload.db.connect) {
+      await payload.db.connect()
+      payload.logger.info('Database connection verified')
+    } else {
+      payload.logger.info(
+        'Database connection method not available - assuming connection is active',
+      )
+    }
+  } catch (error) {
+    payload.logger.error(`Failed to connect to database: ${error}`)
+    throw error
+  }
+
   // we need to clear the media directory before seeding
   // as well as the collections and globals
   // this is because while `yarn seed` drops the database
@@ -60,7 +75,7 @@ export const seed = async ({
         return payload.updateGlobal({
           slug: global,
           data: {
-            navItems: [],
+            columns: [],
           },
           depth: 0,
           context: {
@@ -211,16 +226,8 @@ export const seed = async ({
           {
             link: {
               type: 'custom',
-              label: 'Magazin',
-              url: '/magazin',
-            },
-            hasDropdown: false,
-          },
-          {
-            link: {
-              type: 'custom',
               label: 'Produse',
-              url: '/produse',
+              url: '/products',
             },
             hasDropdown: false,
           },
@@ -370,7 +377,8 @@ export const seed = async ({
         contactAddress: '123 Strada Exemplu, București, România',
         contactPhone: '(+40) 123 456 789',
         contactEmail: 'info@magazinultau.ro',
-        description: 'Magazinul tău online pentru modă și accesorii de calitate. Descoperă colecțiile noastre și găsește stilul perfect pentru tine.',
+        description:
+          'Magazinul tău online pentru modă și accesorii de calitate. Descoperă colecțiile noastre și găsește stilul perfect pentru tine.',
         copyrightText: '© 2024 Magazinul Tău. Toate drepturile rezervate.',
         legalLinks: [
           {
@@ -402,11 +410,13 @@ export const seed = async ({
 
   payload.logger.info('— Seeding products...')
 
-  // Upload product images first
+  // Upload product images first (sequentially to reduce database pressure)
   const productImages = []
   const imageBasePath = './public/assets/images/products'
 
+  payload.logger.info('— Starting image uploads...')
   for (let i = 1; i <= 8; i++) {
+    payload.logger.info(`Uploading image ${i}/8...`)
     const imageDoc = await uploadImageFromFile(
       payload,
       `${imageBasePath}/${i}.jpg`,
@@ -414,8 +424,17 @@ export const seed = async ({
     )
     if (imageDoc) {
       productImages.push(imageDoc)
+      payload.logger.info(`✓ Image ${i}/8 uploaded successfully`)
+    } else {
+      payload.logger.warn(`✗ Image ${i}/8 failed to upload`)
     }
+
+    // Small delay between uploads to avoid overwhelming the connection
+    await new Promise((resolve) => setTimeout(resolve, 500))
   }
+  payload.logger.info(
+    `— Image uploads completed. ${productImages.length}/8 images uploaded successfully.`,
+  )
 
   // Find created categories by title
   const categoriesMap: Record<string, any> = {}
@@ -447,24 +466,24 @@ export const seed = async ({
                 {
                   detail: 0,
                   format: 0,
-                  mode: 'normal',
+                  mode: 'normal' as const,
                   style: '',
                   text: 'Tricou premium din bumbac 100% organic, perfect pentru orice ocazie. Material soft și rezistent.',
-                  type: 'text',
+                  type: 'text' as const,
                   version: 1,
                 },
               ],
-              direction: 'ltr',
+              direction: 'ltr' as const,
               format: '',
               indent: 0,
-              type: 'paragraph',
+              type: 'paragraph' as const,
               version: 1,
             },
           ],
           direction: 'ltr',
           format: '',
           indent: 0,
-          type: 'root',
+          type: 'root' as const,
           version: 1,
         },
       },
@@ -472,16 +491,23 @@ export const seed = async ({
       salePrice: 9999, // 99.99 RON sale price
       sku: 'TPB001',
       category: categoriesMap['Bărbați']?.id,
-      images: productImages[0] ? [{ image: productImages[0].id, alt: 'Tricou Premium Bărbați' }] : [],
+      images: productImages[0]
+        ? [{ image: productImages[0].id, alt: 'Tricou Premium Bărbați' }]
+        : [],
       featured: true,
-      status: 'active',
+      status: 'active' as const,
+      sizes: ['m', 'l', 'xl'],
+      colors: ['blue', 'black'],
+      brand: 'nike',
+      rating: 5,
       inventory: {
         quantity: 25,
         trackQuantity: true,
       },
       seo: {
         title: 'Tricou Premium Bărbați - Bumbac 100% Organic',
-        description: 'Tricou premium din bumbac organic pentru bărbați. Comfort și stil într-un singur produs.',
+        description:
+          'Tricou premium din bumbac organic pentru bărbați. Comfort și stil într-un singur produs.',
         keywords: 'tricou bărbați, bumbac organic, premium',
       },
     },
@@ -496,24 +522,24 @@ export const seed = async ({
                 {
                   detail: 0,
                   format: 0,
-                  mode: 'normal',
+                  mode: 'normal' as const,
                   style: '',
                   text: 'Bluză elegantă din mătase naturală, ideală pentru events și ocazii speciale. Design modern și rafinat.',
-                  type: 'text',
+                  type: 'text' as const,
                   version: 1,
                 },
               ],
-              direction: 'ltr',
+              direction: 'ltr' as const,
               format: '',
               indent: 0,
-              type: 'paragraph',
+              type: 'paragraph' as const,
               version: 1,
             },
           ],
           direction: 'ltr',
           format: '',
           indent: 0,
-          type: 'root',
+          type: 'root' as const,
           version: 1,
         },
       },
@@ -522,7 +548,11 @@ export const seed = async ({
       category: categoriesMap['Femei']?.id,
       images: productImages[1] ? [{ image: productImages[1].id, alt: 'Bluză Elegantă Femei' }] : [],
       featured: true,
-      status: 'active',
+      status: 'active' as const,
+      sizes: ['s', 'm', 'l'],
+      colors: ['red', 'black'],
+      brand: 'adidas',
+      rating: 4,
       inventory: {
         quantity: 15,
         trackQuantity: true,
@@ -544,24 +574,24 @@ export const seed = async ({
                 {
                   detail: 0,
                   format: 0,
-                  mode: 'normal',
+                  mode: 'normal' as const,
                   style: '',
                   text: 'Pantaloni casual din denim premium, tăietură modernă și fit perfect. Rezistenți și confortabili.',
-                  type: 'text',
+                  type: 'text' as const,
                   version: 1,
                 },
               ],
-              direction: 'ltr',
+              direction: 'ltr' as const,
               format: '',
               indent: 0,
-              type: 'paragraph',
+              type: 'paragraph' as const,
               version: 1,
             },
           ],
           direction: 'ltr',
           format: '',
           indent: 0,
-          type: 'root',
+          type: 'root' as const,
           version: 1,
         },
       },
@@ -569,16 +599,23 @@ export const seed = async ({
       salePrice: 12999, // 129.99 RON sale
       sku: 'PCB003',
       category: categoriesMap['Bărbați']?.id,
-      images: productImages[2] ? [{ image: productImages[2].id, alt: 'Pantaloni Casual Bărbați' }] : [],
+      images: productImages[2]
+        ? [{ image: productImages[2].id, alt: 'Pantaloni Casual Bărbați' }]
+        : [],
       featured: false,
-      status: 'active',
+      status: 'active' as const,
+      sizes: ['m', 'l', 'xl'],
+      colors: ['blue', 'black'],
+      brand: 'puma',
+      rating: 4,
       inventory: {
         quantity: 30,
         trackQuantity: true,
       },
       seo: {
         title: 'Pantaloni Casual din Denim Premium - Bărbați',
-        description: 'Pantaloni casual din denim de calitate superioară, fit modern și confort exceptional.',
+        description:
+          'Pantaloni casual din denim de calitate superioară, fit modern și confort exceptional.',
         keywords: 'pantaloni bărbați, denim, casual, premium',
       },
     },
@@ -593,24 +630,24 @@ export const seed = async ({
                 {
                   detail: 0,
                   format: 0,
-                  mode: 'normal',
+                  mode: 'normal' as const,
                   style: '',
                   text: 'Rochie de seară din catifea luxoasă, croială feminină și design sofisticat. Perfectă pentru evenimente elegante.',
-                  type: 'text',
+                  type: 'text' as const,
                   version: 1,
                 },
               ],
-              direction: 'ltr',
+              direction: 'ltr' as const,
               format: '',
               indent: 0,
-              type: 'paragraph',
+              type: 'paragraph' as const,
               version: 1,
             },
           ],
           direction: 'ltr',
           format: '',
           indent: 0,
-          type: 'root',
+          type: 'root' as const,
           version: 1,
         },
       },
@@ -619,14 +656,19 @@ export const seed = async ({
       category: categoriesMap['Femei']?.id,
       images: productImages[3] ? [{ image: productImages[3].id, alt: 'Rochie de Seară' }] : [],
       featured: true,
-      status: 'active',
+      status: 'active' as const,
+      sizes: ['s', 'm', 'l'],
+      colors: ['red', 'black'],
+      brand: 'nike',
+      rating: 5,
       inventory: {
         quantity: 8,
         trackQuantity: true,
       },
       seo: {
         title: 'Rochie de Seară din Catifea Luxoasă',
-        description: 'Rochie de seară elegantă din catifea premium, design sofisticat pentru evenimente speciale.',
+        description:
+          'Rochie de seară elegantă din catifea premium, design sofisticat pentru evenimente speciale.',
         keywords: 'rochie seară, catifea, elegant, femei',
       },
     },
@@ -641,24 +683,24 @@ export const seed = async ({
                 {
                   detail: 0,
                   format: 0,
-                  mode: 'normal',
+                  mode: 'normal' as const,
                   style: '',
                   text: 'Geacă sport din material tehnic, impermeabilă și respirantă. Design modern pentru activități outdoor.',
-                  type: 'text',
+                  type: 'text' as const,
                   version: 1,
                 },
               ],
-              direction: 'ltr',
+              direction: 'ltr' as const,
               format: '',
               indent: 0,
-              type: 'paragraph',
+              type: 'paragraph' as const,
               version: 1,
             },
           ],
           direction: 'ltr',
           format: '',
           indent: 0,
-          type: 'root',
+          type: 'root' as const,
           version: 1,
         },
       },
@@ -668,7 +710,11 @@ export const seed = async ({
       category: categoriesMap['Accesorii']?.id,
       images: productImages[4] ? [{ image: productImages[4].id, alt: 'Geacă Sport Unisex' }] : [],
       featured: false,
-      status: 'active',
+      status: 'active' as const,
+      sizes: ['m', 'l', 'xl'],
+      colors: ['green', 'blue'],
+      brand: 'adidas',
+      rating: 3,
       inventory: {
         quantity: 20,
         trackQuantity: true,
@@ -690,33 +736,39 @@ export const seed = async ({
                 {
                   detail: 0,
                   format: 0,
-                  mode: 'normal',
+                  mode: 'normal' as const,
                   style: '',
                   text: 'Pantofi eleganți din piele naturală, finisaje de calitate și comfort exceptional. Ideali pentru business.',
-                  type: 'text',
+                  type: 'text' as const,
                   version: 1,
                 },
               ],
-              direction: 'ltr',
+              direction: 'ltr' as const,
               format: '',
               indent: 0,
-              type: 'paragraph',
+              type: 'paragraph' as const,
               version: 1,
             },
           ],
           direction: 'ltr',
           format: '',
           indent: 0,
-          type: 'root',
+          type: 'root' as const,
           version: 1,
         },
       },
       price: 39999, // 399.99 RON
       sku: 'PEB006',
       category: categoriesMap['Încălțăminte']?.id,
-      images: productImages[5] ? [{ image: productImages[5].id, alt: 'Pantofi Eleganti Bărbați' }] : [],
+      images: productImages[5]
+        ? [{ image: productImages[5].id, alt: 'Pantofi Eleganti Bărbați' }]
+        : [],
       featured: false,
-      status: 'active',
+      status: 'active' as const,
+      sizes: ['l', 'xl'],
+      colors: ['black'],
+      brand: 'nike',
+      rating: 4,
       inventory: {
         quantity: 12,
         trackQuantity: true,
@@ -738,40 +790,47 @@ export const seed = async ({
                 {
                   detail: 0,
                   format: 0,
-                  mode: 'normal',
+                  mode: 'normal' as const,
                   style: '',
                   text: 'Geantă designer din piele premium, design exclusiv și funcționalitate maximă. Accesoriu perfect pentru orice ținută.',
-                  type: 'text',
+                  type: 'text' as const,
                   version: 1,
                 },
               ],
-              direction: 'ltr',
+              direction: 'ltr' as const,
               format: '',
               indent: 0,
-              type: 'paragraph',
+              type: 'paragraph' as const,
               version: 1,
             },
           ],
           direction: 'ltr',
           format: '',
           indent: 0,
-          type: 'root',
+          type: 'root' as const,
           version: 1,
         },
       },
       price: 45999, // 459.99 RON
       sku: 'GDF007',
       category: categoriesMap['Genți']?.id,
-      images: productImages[6] ? [{ image: productImages[6].id, alt: 'Geantă Designer Femei' }] : [],
+      images: productImages[6]
+        ? [{ image: productImages[6].id, alt: 'Geantă Designer Femei' }]
+        : [],
       featured: true,
-      status: 'active',
+      status: 'active' as const,
+      sizes: [],
+      colors: ['red', 'black'],
+      brand: 'puma',
+      rating: 5,
       inventory: {
         quantity: 6,
         trackQuantity: true,
       },
       seo: {
         title: 'Geantă Designer din Piele Premium - Femei',
-        description: 'Geantă designer exclusivă din piele premium, accesoriu perfect pentru femei moderne.',
+        description:
+          'Geantă designer exclusivă din piele premium, accesoriu perfect pentru femei moderne.',
         keywords: 'geantă femei, designer, piele premium, accesorii',
       },
     },
@@ -786,24 +845,24 @@ export const seed = async ({
                 {
                   detail: 0,
                   format: 0,
-                  mode: 'normal',
+                  mode: 'normal' as const,
                   style: '',
                   text: 'Tricou colorat pentru copii din bumbac organic, design vesel și material hipoalergenic. Perfect pentru joacă.',
-                  type: 'text',
+                  type: 'text' as const,
                   version: 1,
                 },
               ],
-              direction: 'ltr',
+              direction: 'ltr' as const,
               format: '',
               indent: 0,
-              type: 'paragraph',
+              type: 'paragraph' as const,
               version: 1,
             },
           ],
           direction: 'ltr',
           format: '',
           indent: 0,
-          type: 'root',
+          type: 'root' as const,
           version: 1,
         },
       },
@@ -813,31 +872,60 @@ export const seed = async ({
       category: categoriesMap['Copii']?.id,
       images: productImages[7] ? [{ image: productImages[7].id, alt: 'Tricou Copii Colorat' }] : [],
       featured: false,
-      status: 'active',
+      status: 'active' as const,
+      sizes: ['s', 'm'],
+      colors: ['green', 'blue'],
+      brand: 'adidas',
+      rating: 4,
       inventory: {
         quantity: 40,
         trackQuantity: true,
       },
       seo: {
         title: 'Tricou Colorat din Bumbac Organic - Copii',
-        description: 'Tricou colorat pentru copii din bumbac organic, design vesel și material hipoalergenic.',
+        description:
+          'Tricou colorat pentru copii din bumbac organic, design vesel și material hipoalergenic.',
         keywords: 'tricou copii, bumbac organic, colorat, hipoalergenic',
       },
     },
   ]
 
-  // Create products
-  for (const productData of productsData) {
+  // Create products (with connection verification)
+  payload.logger.info(`— Creating ${productsData.length} products...`)
+  let successCount = 0
+
+  for (const [index, productData] of productsData.entries()) {
     try {
+      // Ensure connection before each product creation
+      try {
+        if (payload.db.connect) {
+          await payload.db.connect()
+        }
+      } catch (connectionError) {
+        payload.logger.warn(
+          `Database reconnection attempted for product ${productData.name}: ${connectionError}`,
+        )
+      }
+
       await payload.create({
         collection: 'products',
-        data: productData,
+        data: productData as any,
       })
-      payload.logger.info(`Created product: ${productData.name}`)
+      successCount++
+      payload.logger.info(
+        `✓ Created product ${index + 1}/${productsData.length}: ${productData.name}`,
+      )
     } catch (error) {
-      payload.logger.error(`Failed to create product ${productData.name}: ${error}`)
+      payload.logger.error(`✗ Failed to create product ${productData.name}: ${error}`)
     }
+
+    // Small delay between product creations
+    await new Promise((resolve) => setTimeout(resolve, 200))
   }
+
+  payload.logger.info(
+    `— Products creation completed. ${successCount}/${productsData.length} products created successfully.`,
+  )
 
   payload.logger.info('Seeded database successfully!')
 }
@@ -846,47 +934,73 @@ async function uploadImageFromFile(
   payload: Payload,
   filePath: string,
   filename: string,
+  retries: number = 3,
 ): Promise<any> {
   const fs = await import('fs')
   const path = await import('path')
 
-  try {
-    const fullPath = path.resolve(filePath)
+  const attempt = async (attemptNumber: number): Promise<any> => {
+    try {
+      const fullPath = path.resolve(filePath)
 
-    // Check if file exists
-    if (!fs.existsSync(fullPath)) {
-      payload.logger.warn(`Image file does not exist: ${fullPath}`)
-      return null
+      // Check if file exists
+      if (!fs.existsSync(fullPath)) {
+        payload.logger.warn(`Image file does not exist: ${fullPath}`)
+        return null
+      }
+
+      const buffer = fs.readFileSync(fullPath)
+      const extension = path.extname(filename).toLowerCase()
+      const mimeTypes: Record<string, string> = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.webp': 'image/webp',
+      }
+
+      payload.logger.info(
+        `Uploading image: ${filename} (${buffer.length} bytes) - Attempt ${attemptNumber}`,
+      )
+
+      // Ensure connection before upload
+      try {
+        if (payload.db.connect) {
+          await payload.db.connect()
+        }
+      } catch (connectionError) {
+        payload.logger.warn(`Database reconnection attempted for ${filename}: ${connectionError}`)
+      }
+
+      const doc = await payload.create({
+        collection: 'media',
+        data: {
+          alt: `Product image ${filename}`,
+        },
+        file: {
+          data: buffer,
+          mimetype: mimeTypes[extension] || 'image/jpeg',
+          name: filename,
+          size: buffer.length,
+        },
+      })
+
+      payload.logger.info(`Successfully uploaded image: ${filename}`)
+      return doc
+    } catch (error) {
+      payload.logger.warn(`Attempt ${attemptNumber} failed for ${filename}: ${error}`)
+
+      if (attemptNumber < retries) {
+        // Wait before retry (exponential backoff)
+        const waitTime = Math.pow(2, attemptNumber) * 1000
+        payload.logger.info(`Retrying ${filename} in ${waitTime}ms...`)
+        await new Promise((resolve) => setTimeout(resolve, waitTime))
+        return attempt(attemptNumber + 1)
+      } else {
+        payload.logger.error(`All attempts failed for ${filename}: ${error}`)
+        return null
+      }
     }
-
-    const buffer = fs.readFileSync(fullPath)
-    const extension = path.extname(filename).toLowerCase()
-    const mimeTypes: Record<string, string> = {
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.png': 'image/png',
-      '.webp': 'image/webp',
-    }
-
-    payload.logger.info(`Uploading image: ${filename} (${buffer.length} bytes)`)
-
-    const doc = await payload.create({
-      collection: 'media',
-      data: {
-        alt: `Product image ${filename}`,
-      },
-      file: {
-        data: buffer,
-        mimetype: mimeTypes[extension] || 'image/jpeg',
-        name: filename,
-        size: buffer.length,
-      },
-    })
-
-    payload.logger.info(`Successfully uploaded image: ${filename}`)
-    return doc
-  } catch (error) {
-    payload.logger.warn(`Failed to upload image ${filename}: ${error}`)
-    return null
   }
+
+  return attempt(1)
 }

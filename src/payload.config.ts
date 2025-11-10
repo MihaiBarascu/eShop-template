@@ -63,6 +63,16 @@ export default buildConfig({
   editor: defaultLexical,
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
+    connectOptions: {
+      connectTimeoutMS: 30000, // 30 seconds
+      socketTimeoutMS: 45000, // 45 seconds
+      serverSelectionTimeoutMS: 30000, // 30 seconds
+      maxPoolSize: 10, // Limit connection pool
+      minPoolSize: 1,
+      maxIdleTimeMS: 300000, // 5 minutes
+      retryWrites: true,
+      retryReads: true,
+    },
   }),
   collections: [Pages, Posts, Media, Categories, Products, Users, Orders],
   cors: [getServerSideURL()].filter(Boolean),

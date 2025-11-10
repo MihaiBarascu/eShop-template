@@ -89,6 +89,66 @@ export const Products: CollectionConfig = {
       ],
     },
     {
+      name: 'sizes',
+      type: 'select',
+      hasMany: true,
+      options: [
+        { label: 'XS', value: 'xs' },
+        { label: 'S', value: 's' },
+        { label: 'M', value: 'm' },
+        { label: 'L', value: 'l' },
+        { label: 'XL', value: 'xl' },
+        { label: 'XXL', value: 'xxl' },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'colors',
+      type: 'select',
+      hasMany: true,
+      options: [
+        { label: 'Red', value: 'red' },
+        { label: 'Blue', value: 'blue' },
+        { label: 'Green', value: 'green' },
+        { label: 'Black', value: 'black' },
+        { label: 'White', value: 'white' },
+        { label: 'Gray', value: 'gray' },
+        { label: 'Yellow', value: 'yellow' },
+        { label: 'Pink', value: 'pink' },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'brand',
+      type: 'select',
+      options: [
+        { label: 'Nike', value: 'nike' },
+        { label: 'Adidas', value: 'adidas' },
+        { label: 'Puma', value: 'puma' },
+        { label: 'Under Armour', value: 'under-armour' },
+        { label: 'New Balance', value: 'new-balance' },
+        { label: 'Reebok', value: 'reebok' },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'rating',
+      type: 'number',
+      min: 0,
+      max: 5,
+      admin: {
+        step: 0.1,
+        position: 'sidebar',
+        description: 'Average rating (0-5 stars)',
+      },
+    },
+    {
       name: 'featured',
       type: 'checkbox',
       admin: {

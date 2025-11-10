@@ -154,7 +154,7 @@ export default async function StoreHome() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="flex flex-wrap -mx-4">
               {featuredProducts.map((product) => {
                 const mainImage =
                   Array.isArray(product.images) && product.images.length > 0
@@ -170,47 +170,37 @@ export default async function StoreHome() {
                 const regularPrice = typeof product.price === 'number' ? product.price : 0
 
                 return (
-                  <div
-                    key={product.id}
-                    className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow group"
-                  >
-                    <Link href={`/shop/product/${product.slug}`}>
-                      <div className="relative">
+                  <div key={product.id} className="w-full sm:w-1/2 lg:w-1/4 px-4 mb-8">
+                    <div className="bg-white p-3 rounded-lg shadow-lg">
+                      <Link href={`/products/${product.slug}`}>
                         <img
                           src={imageUrl}
                           alt={product.name || 'Product'}
-                          className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full object-cover mb-4 rounded-lg"
                         />
-                        {salePrice && salePrice < regularPrice && (
-                          <span className="absolute top-2 left-2 bg-red text-white px-2 py-1 rounded-md text-sm">
-                            Sale
-                          </span>
-                        )}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-dark mb-2 line-clamp-2">
-                          {product.name}
-                        </h3>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {salePrice && salePrice < regularPrice ? (
-                              <>
-                                <span className="text-red font-bold">${salePrice}</span>
-                                <span className="text-gray-500 line-through text-sm">
-                                  ${regularPrice}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-gray-dark font-bold">${regularPrice}</span>
-                            )}
-                          </div>
+                        <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
+                        <p className="my-2">
+                          {typeof product.category === 'object' && product.category?.title}
+                        </p>
+                        <div className="flex items-center mb-4">
+                          {salePrice && salePrice < regularPrice ? (
+                            <>
+                              <span className="text-lg font-bold text-primary">
+                                ${(salePrice / 100).toFixed(2)}
+                              </span>
+                              <span className="text-sm line-through ml-2">
+                                ${(regularPrice / 100).toFixed(2)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-lg font-bold text-gray-900">
+                              ${(regularPrice / 100).toFixed(2)}
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    </Link>
-                    <div className="px-4 pb-4">
-                      <button className="w-full bg-red text-white py-2 rounded-lg hover:bg-red/90 transition-colors">
-                        Adauga in cos
+                      </Link>
+                      <button className="bg-primary border border-transparent hover:bg-transparent hover:border-primary text-white hover:text-primary font-semibold py-2 px-4 rounded-full w-full">
+                        Add to Cart
                       </button>
                     </div>
                   </div>
