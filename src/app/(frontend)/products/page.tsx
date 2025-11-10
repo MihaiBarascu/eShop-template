@@ -8,13 +8,13 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 600
 
 async function getProducts(searchParams?: {
-  category?: string;
-  search?: string;
-  page?: string;
-  sizes?: string;
-  colors?: string;
-  brand?: string;
-  rating?: string;
+  category?: string
+  search?: string
+  page?: string
+  sizes?: string
+  colors?: string
+  brand?: string
+  rating?: string
 }) {
   const payload = await getPayload({ config })
 
@@ -138,13 +138,13 @@ export default async function ShopPage({
   searchParams,
 }: {
   searchParams?: Promise<{
-    category?: string;
-    search?: string;
-    page?: string;
-    sizes?: string;
-    colors?: string;
-    brand?: string;
-    rating?: string;
+    category?: string
+    search?: string
+    page?: string
+    sizes?: string
+    colors?: string
+    brand?: string
+    rating?: string
   }>
 }) {
   const resolvedSearchParams = await searchParams
@@ -176,7 +176,12 @@ export default async function ShopPage({
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center px-2">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </div>
             </div>
@@ -196,8 +201,6 @@ export default async function ShopPage({
 
           {/* Products List */}
           <div className="w-full md:w-3/4 p-4">
-
-
             {/* Products grid */}
             {result.docs.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -272,7 +275,7 @@ export default async function ShopPage({
                 <ul className="inline-flex space-x-2">
                   {/* Smart 3-page display */}
                   {(() => {
-                    const currentPage = result.page
+                    const currentPage = result.page || 0
                     const totalPages = result.totalPages
                     let pagesToShow: number[] = []
 
@@ -304,12 +307,24 @@ export default async function ShopPage({
                           {isValidPage ? (
                             <Link
                               href={`/products?${new URLSearchParams({
-                                ...(resolvedSearchParams?.category && { category: resolvedSearchParams.category }),
-                                ...(resolvedSearchParams?.search && { search: resolvedSearchParams.search }),
-                                ...(resolvedSearchParams?.sizes && { sizes: resolvedSearchParams.sizes }),
-                                ...(resolvedSearchParams?.colors && { colors: resolvedSearchParams.colors }),
-                                ...(resolvedSearchParams?.brand && { brand: resolvedSearchParams.brand }),
-                                ...(resolvedSearchParams?.rating && { rating: resolvedSearchParams.rating }),
+                                ...(resolvedSearchParams?.category && {
+                                  category: resolvedSearchParams.category,
+                                }),
+                                ...(resolvedSearchParams?.search && {
+                                  search: resolvedSearchParams.search,
+                                }),
+                                ...(resolvedSearchParams?.sizes && {
+                                  sizes: resolvedSearchParams.sizes,
+                                }),
+                                ...(resolvedSearchParams?.colors && {
+                                  colors: resolvedSearchParams.colors,
+                                }),
+                                ...(resolvedSearchParams?.brand && {
+                                  brand: resolvedSearchParams.brand,
+                                }),
+                                ...(resolvedSearchParams?.rating && {
+                                  rating: resolvedSearchParams.rating,
+                                }),
                                 page: pageNum.toString(),
                               }).toString()}`}
                               className={`w-10 h-10 flex items-center justify-center rounded-full ${
@@ -335,12 +350,20 @@ export default async function ShopPage({
                     {result.hasNextPage ? (
                       <Link
                         href={`/products?${new URLSearchParams({
-                          ...(resolvedSearchParams?.category && { category: resolvedSearchParams.category }),
-                          ...(resolvedSearchParams?.search && { search: resolvedSearchParams.search }),
+                          ...(resolvedSearchParams?.category && {
+                            category: resolvedSearchParams.category,
+                          }),
+                          ...(resolvedSearchParams?.search && {
+                            search: resolvedSearchParams.search,
+                          }),
                           ...(resolvedSearchParams?.sizes && { sizes: resolvedSearchParams.sizes }),
-                          ...(resolvedSearchParams?.colors && { colors: resolvedSearchParams.colors }),
+                          ...(resolvedSearchParams?.colors && {
+                            colors: resolvedSearchParams.colors,
+                          }),
                           ...(resolvedSearchParams?.brand && { brand: resolvedSearchParams.brand }),
-                          ...(resolvedSearchParams?.rating && { rating: resolvedSearchParams.rating }),
+                          ...(resolvedSearchParams?.rating && {
+                            rating: resolvedSearchParams.rating,
+                          }),
                           page: result.nextPage!.toString(),
                         }).toString()}`}
                         className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-primary hover:text-white"
