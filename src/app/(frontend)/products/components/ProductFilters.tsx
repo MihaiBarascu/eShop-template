@@ -44,7 +44,7 @@ export default function ProductFilters({ categories }: ProductFiltersProps) {
               <label key={category.id} className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="form-checkbox"
+                  className="form-checkbox custom-checkbox"
                   checked={isSelected}
                   onChange={() => {
                     updateFilter('category', isSelected ? null : category.slug)
@@ -67,7 +67,7 @@ export default function ProductFilters({ categories }: ProductFiltersProps) {
               <label key={size} className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="form-checkbox"
+                  className="form-checkbox custom-checkbox"
                   checked={isSelected}
                   onChange={() => {
                     updateFilter('sizes', isSelected ? null : size.toLowerCase())
@@ -90,7 +90,7 @@ export default function ProductFilters({ categories }: ProductFiltersProps) {
               <label key={color} className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="form-checkbox"
+                  className="form-checkbox custom-checkbox"
                   checked={isSelected}
                   onChange={() => {
                     updateFilter('colors', isSelected ? null : color.toLowerCase())
@@ -113,7 +113,7 @@ export default function ProductFilters({ categories }: ProductFiltersProps) {
               <label key={brand} className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="form-checkbox"
+                  className="form-checkbox custom-checkbox"
                   checked={isSelected}
                   onChange={() => {
                     updateFilter('brand', isSelected ? null : brand.toLowerCase())
@@ -140,7 +140,7 @@ export default function ProductFilters({ categories }: ProductFiltersProps) {
               <label key={rating.value} className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="form-checkbox"
+                  className="form-checkbox custom-checkbox"
                   checked={isSelected}
                   onChange={() => {
                     updateFilter('rating', isSelected ? null : rating.value)

@@ -22,7 +22,13 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const pathname = usePathname()
 
   // Helper function to generate proper href from link field
-  const generateHref = (link: any) => {
+  const generateHref = (link: {
+    type?: ('reference' | 'custom') | null;
+    url?: string | null;
+    reference?:
+      | ({ relationTo: 'pages'; value: string | { slug?: string; id?: string } } | null)
+      | ({ relationTo: 'posts'; value: string | { slug?: string; id?: string } } | null);
+  }) => {
     if (!link) return '#'
 
     if (link.type === 'custom') {
@@ -30,11 +36,12 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
     }
 
     if (link.type === 'reference' && link.reference) {
-      if (typeof link.reference === 'object') {
-        // Handle relationship reference
-        return `/${link.reference.slug || link.reference.id || ''}`
+      if (typeof link.reference.value === 'object') {
+        // Handle populated reference object
+        return `/${link.reference.value.slug || link.reference.value.id || ''}`
       }
-      return `/${link.reference}`
+      // Handle string reference
+      return `/${link.reference.value}`
     }
 
     return '#'

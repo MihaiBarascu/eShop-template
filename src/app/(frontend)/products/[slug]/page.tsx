@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 import { cache } from 'react'
+import ProductTabs from '../components/ProductTabs'
 
 export const dynamic = 'force-static'
 
@@ -72,7 +73,7 @@ type Args = {
 }
 
 export default async function ProductPage({ params: paramsPromise }: Args) {
-  const { isEnabled: draft } = await draftMode()
+  const { isEnabled: _draft } = await draftMode()
   const { slug = '' } = await paramsPromise
 
   const product = await getProductBySlug({ slug })
@@ -174,11 +175,24 @@ export default async function ProductPage({ params: paramsPromise }: Args) {
                 <div className="pb-8 border-b border-gray-200">
                   <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
                   <div className="flex items-center mb-8">
-                    <span>★★★★★</span>
-                    <span className="ml-2">(0 Reviews)</span>
+                    <span className="text-primary">
+                      {product.rating && product.rating > 0 ? (
+                        '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating))
+                      ) : (
+                        '★★★★★'
+                      )}
+                    </span>
+                    <span className="ml-2">({product.rating ? `${product.rating.toFixed(1)}` : '0'} Reviews)</span>
                     <a href="#" className="ml-4 text-primary font-semibold">Write a review</a>
                   </div>
                   <div className="mb-4 pb-4 border-b border-gray-200">
+                    {product.brand && (
+                      <p className="mb-2">
+                        Brand: <strong>
+                          <span className="hover:text-primary capitalize">{product.brand}</span>
+                        </strong>
+                      </p>
+                    )}
                     {typeof product.category === 'object' && product.category?.title && (
                       <p className="mb-2">
                         Category: <strong>{product.category.title}</strong>
@@ -273,6 +287,9 @@ export default async function ProductPage({ params: paramsPromise }: Args) {
           </div>
         </div>
       </section>
+
+      {/* Product Tabs */}
+      <ProductTabs product={product} />
 
       {/* Similar Products */}
       {similarProducts.length > 0 && (

@@ -149,6 +149,41 @@ export const Products: CollectionConfig = {
       },
     },
     {
+      name: 'material',
+      type: 'text',
+      admin: {
+        description: 'e.g., 100% Cotton, Polyester blend, etc.',
+      },
+    },
+    {
+      name: 'careInstructions',
+      type: 'textarea',
+      admin: {
+        description: 'Washing and care instructions',
+      },
+    },
+    {
+      name: 'fit',
+      type: 'select',
+      options: [
+        { label: 'Regular', value: 'regular' },
+        { label: 'Slim', value: 'slim' },
+        { label: 'Relaxed', value: 'relaxed' },
+        { label: 'Athletic', value: 'athletic' },
+        { label: 'Oversized', value: 'oversized' },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'modelHeight',
+      type: 'text',
+      admin: {
+        description: 'e.g., Our model is 180 cm tall and is wearing size M',
+      },
+    },
+    {
       name: 'featured',
       type: 'checkbox',
       admin: {

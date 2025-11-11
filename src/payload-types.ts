@@ -839,6 +839,19 @@ export interface Product {
    */
   rating?: number | null;
   /**
+   * e.g., 100% Cotton, Polyester blend, etc.
+   */
+  material?: string | null;
+  /**
+   * Washing and care instructions
+   */
+  careInstructions?: string | null;
+  fit?: ('regular' | 'slim' | 'relaxed' | 'athletic' | 'oversized') | null;
+  /**
+   * e.g., Our model is 180 cm tall and is wearing size M
+   */
+  modelHeight?: string | null;
+  /**
    * Show this product on homepage
    */
   featured?: boolean | null;
@@ -1483,6 +1496,10 @@ export interface ProductsSelect<T extends boolean = true> {
   colors?: T;
   brand?: T;
   rating?: T;
+  material?: T;
+  careInstructions?: T;
+  fit?: T;
+  modelHeight?: T;
   featured?: T;
   status?: T;
   inventory?:

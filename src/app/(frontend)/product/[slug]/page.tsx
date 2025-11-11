@@ -72,7 +72,7 @@ type Args = {
 }
 
 export default async function ProductPage({ params: paramsPromise }: Args) {
-  const { isEnabled: draft } = await draftMode()
+  const { isEnabled: _draft } = await draftMode()
   const { slug = '' } = await paramsPromise
 
   const product = await getProductBySlug({ slug })

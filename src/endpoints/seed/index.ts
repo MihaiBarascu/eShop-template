@@ -108,7 +108,7 @@ export const seed = async ({
     },
   })
 
-  const [demoAuthor, image1Doc] = await Promise.all([
+  const [_demoAuthor, _image1Doc] = await Promise.all([
     payload.create({
       collection: 'users',
       data: {
@@ -411,7 +411,7 @@ export const seed = async ({
   payload.logger.info('— Seeding products...')
 
   // Upload product images first (sequentially to reduce database pressure)
-  const productImages = []
+  const productImages: any[] = []
   const imageBasePath = './public/assets/images/products'
 
   payload.logger.info('— Starting image uploads...')
@@ -500,6 +500,10 @@ export const seed = async ({
       colors: ['blue', 'black'],
       brand: 'nike',
       rating: 5,
+      material: '100% Cotton',
+      careInstructions: 'Machine wash at 30°C, do not tumble dry, iron on low heat',
+      fit: 'regular',
+      modelHeight: 'Our model is 180 cm tall and is wearing size M',
       inventory: {
         quantity: 25,
         trackQuantity: true,
@@ -553,6 +557,10 @@ export const seed = async ({
       colors: ['red', 'black'],
       brand: 'adidas',
       rating: 4,
+      material: 'Natural Silk',
+      careInstructions: 'Dry clean only, do not iron directly on fabric',
+      fit: 'slim',
+      modelHeight: 'Our model is 170 cm tall and is wearing size M',
       inventory: {
         quantity: 15,
         trackQuantity: true,
@@ -608,6 +616,10 @@ export const seed = async ({
       colors: ['blue', 'black'],
       brand: 'puma',
       rating: 4,
+      material: 'Premium Denim',
+      careInstructions: 'Machine wash at 40°C, tumble dry medium heat',
+      fit: 'regular',
+      modelHeight: 'Our model is 185 cm tall and is wearing size L',
       inventory: {
         quantity: 30,
         trackQuantity: true,
@@ -661,6 +673,10 @@ export const seed = async ({
       colors: ['red', 'black'],
       brand: 'nike',
       rating: 5,
+      material: 'Luxury Velvet',
+      careInstructions: 'Dry clean only, store hanging',
+      fit: 'slim',
+      modelHeight: 'Our model is 175 cm tall and is wearing size M',
       inventory: {
         quantity: 8,
         trackQuantity: true,
@@ -715,6 +731,10 @@ export const seed = async ({
       colors: ['green', 'blue'],
       brand: 'adidas',
       rating: 3,
+      material: 'Technical Fabric - Waterproof',
+      careInstructions: 'Machine wash at 30°C, do not use fabric softener',
+      fit: 'athletic',
+      modelHeight: 'Unisex fit - check size guide',
       inventory: {
         quantity: 20,
         trackQuantity: true,
@@ -769,6 +789,10 @@ export const seed = async ({
       colors: ['black'],
       brand: 'nike',
       rating: 4,
+      material: 'Natural Leather',
+      careInstructions: 'Clean with leather care products, avoid water',
+      fit: 'regular',
+      modelHeight: 'Classic business shoe fit',
       inventory: {
         quantity: 12,
         trackQuantity: true,
@@ -823,6 +847,10 @@ export const seed = async ({
       colors: ['red', 'black'],
       brand: 'puma',
       rating: 5,
+      material: 'Premium Leather',
+      careInstructions: 'Clean with soft cloth, use leather conditioner',
+      fit: 'regular',
+      modelHeight: 'Designer handbag - one size',
       inventory: {
         quantity: 6,
         trackQuantity: true,
@@ -877,6 +905,10 @@ export const seed = async ({
       colors: ['green', 'blue'],
       brand: 'adidas',
       rating: 4,
+      material: 'Organic Cotton',
+      careInstructions: 'Machine wash at 30°C, suitable for sensitive skin',
+      fit: 'relaxed',
+      modelHeight: 'Kids sizes - check size chart',
       inventory: {
         quantity: 40,
         trackQuantity: true,
@@ -935,11 +967,11 @@ async function uploadImageFromFile(
   filePath: string,
   filename: string,
   retries: number = 3,
-): Promise<any> {
+): Promise<unknown> {
   const fs = await import('fs')
   const path = await import('path')
 
-  const attempt = async (attemptNumber: number): Promise<any> => {
+  const attempt = async (attemptNumber: number): Promise<unknown> => {
     try {
       const fullPath = path.resolve(filePath)
 

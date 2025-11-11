@@ -3,6 +3,8 @@ import config from '@payload-config'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import ProductFilters from './components/ProductFilters'
+import ProductControls from './components/ProductControls'
+import ProductGrid from './components/ProductGrid'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 600
@@ -15,6 +17,8 @@ async function getProducts(searchParams?: {
   colors?: string
   brand?: string
   rating?: string
+  onSale?: string
+  sort?: string
 }) {
   const payload = await getPayload({ config })
 
@@ -74,12 +78,47 @@ async function getProducts(searchParams?: {
       }
     }
 
+    // On Sale filter
+    if (searchParams?.onSale === 'true') {
+      where.salePrice = {
+        exists: true,
+      }
+    }
+
     const page = parseInt(searchParams?.page || '1')
     const limit = 9 // 3x3 grid layout
+
+    // Sort logic - PayloadCMS expects string format
+    let sort: string = '-createdAt' // default: latest first
+    switch (searchParams?.sort) {
+      case 'popularity':
+        sort = '-rating'
+        break
+      case 'price-low':
+        sort = 'price'
+        break
+      case 'price-high':
+        sort = '-price'
+        break
+      case 'name-az':
+        sort = 'name'
+        break
+      case 'name-za':
+        sort = '-name'
+        break
+      case 'rating':
+        sort = '-rating'
+        break
+      case 'latest':
+      default:
+        sort = '-createdAt'
+        break
+    }
 
     const result = await payload.find({
       collection: 'products',
       where,
+      sort,
       limit,
       page,
       depth: 2,
@@ -145,6 +184,9 @@ export default async function ShopPage({
     colors?: string
     brand?: string
     rating?: string
+    onSale?: string
+    sort?: string
+    view?: string
   }>
 }) {
   const resolvedSearchParams = await searchParams
@@ -155,38 +197,7 @@ export default async function ShopPage({
     <section id="shop">
       <div className="container mx-auto">
         {/* Top Filter */}
-        <div className="flex flex-col md:flex-row justify-between items-center py-4">
-          <div className="flex items-center space-x-4">
-            <button className="bg-primary text-white hover:bg-transparent hover:text-primary border hover:border-primary py-2 px-4 rounded-full focus:outline-none">
-              Show On Sale
-            </button>
-            <button className="bg-primary text-white hover:bg-transparent hover:text-primary border hover:border-primary py-2 px-4 rounded-full focus:outline-none">
-              List View
-            </button>
-            <button className="bg-primary text-white hover:bg-transparent hover:text-primary border hover:border-primary py-2 px-4 rounded-full focus:outline-none">
-              Grid View
-            </button>
-          </div>
-          <div className="flex mt-5 md:mt-0 space-x-4">
-            <div className="relative">
-              <select className="block appearance-none w-full bg-white border hover:border-primary px-4 py-2 pr-8 rounded-full shadow leading-tight focus:outline-none focus:shadow-outline">
-                <option>Sort by Latest</option>
-                <option>Sort by Popularity</option>
-                <option>Sort by A-Z</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center px-2">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProductControls />
 
         {/* Filter Toggle Button for Mobile */}
         <div className="block md:hidden text-center mb-4">
@@ -201,73 +212,10 @@ export default async function ShopPage({
 
           {/* Products List */}
           <div className="w-full md:w-3/4 p-4">
-            {/* Products grid */}
-            {result.docs.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {result.docs.map((product) => {
-                  const mainImage =
-                    Array.isArray(product.images) && product.images.length > 0
-                      ? product.images[0].image
-                      : null
-
-                  const imageUrl =
-                    typeof mainImage === 'object' && mainImage?.url
-                      ? mainImage.url
-                      : '/assets/images/placeholder-product.jpg'
-
-                  const salePrice = typeof product.salePrice === 'number' ? product.salePrice : null
-                  const regularPrice = typeof product.price === 'number' ? product.price : 0
-
-                  return (
-                    <div key={product.id} className="bg-white p-4 rounded-lg shadow">
-                      <Link href={`/products/${product.slug}`}>
-                        <img
-                          src={imageUrl}
-                          alt={product.name || 'Product'}
-                          className="w-full object-cover mb-4 rounded-lg"
-                        />
-                        <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-                        <p className="my-2">
-                          {typeof product.category === 'object' && product.category?.title}
-                        </p>
-                        <div className="flex items-center mb-4">
-                          {salePrice && salePrice < regularPrice ? (
-                            <>
-                              <span className="text-lg font-bold text-primary">
-                                ${(salePrice / 100).toFixed(2)}
-                              </span>
-                              <span className="text-sm line-through ml-2">
-                                ${(regularPrice / 100).toFixed(2)}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-lg font-bold text-gray-900">
-                              ${(regularPrice / 100).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                      <button className="bg-primary border border-transparent hover:bg-transparent hover:border-primary text-white hover:text-primary font-semibold py-2 px-4 rounded-full w-full">
-                        Add to Cart
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-semibold mb-4">No products found</h3>
-                <p className="text-gray-600 mb-6">
-                  Try adjusting your search or browse our categories
-                </p>
-                <Link
-                  href="/products"
-                  className="bg-primary text-white px-6 py-3 rounded-full hover:bg-transparent hover:border-primary border border-transparent hover:text-primary font-semibold"
-                >
-                  View All Products
-                </Link>
-              </div>
-            )}
+            <ProductGrid
+              products={result.docs}
+              viewMode={(resolvedSearchParams?.view as 'grid' | 'list') || 'grid'}
+            />
 
             {/* Pagination - Tailstore4 Style with Smart Logic */}
             <div className="flex justify-center mt-8">
