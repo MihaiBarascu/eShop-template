@@ -2,6 +2,7 @@ import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest } from 'payloa
 
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
+import { getServerSideURL } from '@/utilities/getURL'
 
 const collections: CollectionSlug[] = [
   'categories',
@@ -410,23 +411,31 @@ export const seed = async ({
 
   payload.logger.info('— Seeding products...')
 
-  // Upload product images first (sequentially to reduce database pressure)
+  // Upload product images using official Payload filePath method
   const productImages: any[] = []
-  const imageBasePath = './public/assets/images/products'
+  const path = await import('path')
 
-  payload.logger.info('— Starting image uploads...')
+  payload.logger.info('— Starting image uploads using official Payload method...')
   for (let i = 1; i <= 8; i++) {
     payload.logger.info(`Uploading image ${i}/8...`)
-    const imageDoc = await uploadImageFromFile(
-      payload,
-      `${imageBasePath}/${i}.jpg`,
-      `product-${i}.jpg`,
-    )
-    if (imageDoc) {
+
+    try {
+      // Use absolute path for better Vercel compatibility
+      const imagePath = path.join(process.cwd(), 'public', 'assets', 'images', 'products', `${i}.jpg`)
+      payload.logger.info(`Attempting to upload from: ${imagePath}`)
+
+      const imageDoc = await payload.create({
+        collection: 'media',
+        data: {
+          alt: `Product image ${i}`,
+        },
+        filePath: imagePath,
+      })
+
       productImages.push(imageDoc)
       payload.logger.info(`✓ Image ${i}/8 uploaded successfully`)
-    } else {
-      payload.logger.warn(`✗ Image ${i}/8 failed to upload`)
+    } catch (error) {
+      payload.logger.error(`✗ Image ${i}/8 failed to upload: ${error}`)
     }
 
     // Small delay between uploads to avoid overwhelming the connection
@@ -962,77 +971,3 @@ export const seed = async ({
   payload.logger.info('Seeded database successfully!')
 }
 
-async function uploadImageFromFile(
-  payload: Payload,
-  filePath: string,
-  filename: string,
-  retries: number = 3,
-): Promise<unknown> {
-  const fs = await import('fs')
-  const path = await import('path')
-
-  const attempt = async (attemptNumber: number): Promise<unknown> => {
-    try {
-      const fullPath = path.resolve(filePath)
-
-      // Check if file exists
-      if (!fs.existsSync(fullPath)) {
-        payload.logger.warn(`Image file does not exist: ${fullPath}`)
-        return null
-      }
-
-      const buffer = fs.readFileSync(fullPath)
-      const extension = path.extname(filename).toLowerCase()
-      const mimeTypes: Record<string, string> = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.webp': 'image/webp',
-      }
-
-      payload.logger.info(
-        `Uploading image: ${filename} (${buffer.length} bytes) - Attempt ${attemptNumber}`,
-      )
-
-      // Ensure connection before upload
-      try {
-        if (payload.db.connect) {
-          await payload.db.connect()
-        }
-      } catch (connectionError) {
-        payload.logger.warn(`Database reconnection attempted for ${filename}: ${connectionError}`)
-      }
-
-      const doc = await payload.create({
-        collection: 'media',
-        data: {
-          alt: `Product image ${filename}`,
-        },
-        file: {
-          data: buffer,
-          mimetype: mimeTypes[extension] || 'image/jpeg',
-          name: filename,
-          size: buffer.length,
-        },
-      })
-
-      payload.logger.info(`Successfully uploaded image: ${filename}`)
-      return doc
-    } catch (error) {
-      payload.logger.warn(`Attempt ${attemptNumber} failed for ${filename}: ${error}`)
-
-      if (attemptNumber < retries) {
-        // Wait before retry (exponential backoff)
-        const waitTime = Math.pow(2, attemptNumber) * 1000
-        payload.logger.info(`Retrying ${filename} in ${waitTime}ms...`)
-        await new Promise((resolve) => setTimeout(resolve, waitTime))
-        return attempt(attemptNumber + 1)
-      } else {
-        payload.logger.error(`All attempts failed for ${filename}: ${error}`)
-        return null
-      }
-    }
-  }
-
-  return attempt(1)
-}
