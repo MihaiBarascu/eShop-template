@@ -411,36 +411,53 @@ export const seed = async ({
 
   payload.logger.info('— Seeding products...')
 
-  // Upload product images using official Payload filePath method
+  // Upload product images using official Payload method from Unsplash
   const productImages: any[] = []
-  const path = await import('path')
+
+  // Using tall fashion product images similar to your originals (600x800 ratio)
+  const productImageUrls = [
+    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=800&fit=crop&auto=format', // Tricou bărbați
+    'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=600&h=800&fit=crop&auto=format', // Bluză femei
+    'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&h=800&fit=crop&auto=format', // Pantaloni bărbați
+    'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=600&h=800&fit=crop&auto=format', // Rochie de seară
+    'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=800&fit=crop&auto=format', // Geacă sport
+    'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=800&fit=crop&auto=format', // Pantofi eleganți
+    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=800&fit=crop&auto=format', // Geantă designer
+    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&h=800&fit=crop&auto=format', // Tricou copii
+  ]
 
   payload.logger.info('— Starting image uploads using official Payload method...')
-  for (let i = 1; i <= 8; i++) {
-    payload.logger.info(`Uploading image ${i}/8...`)
 
-    try {
-      // Use absolute path for better Vercel compatibility
-      const imagePath = path.join(process.cwd(), 'public', 'assets', 'images', 'products', `${i}.jpg`)
-      payload.logger.info(`Attempting to upload from: ${imagePath}`)
+  // Fetch all images in parallel using official method
+  const imagePromises = productImageUrls.map((imageUrl, i) => {
+    payload.logger.info(`Fetching image ${i + 1}/8 from URL: ${imageUrl}`)
+    return fetchFileByURL(imageUrl)
+  })
 
-      const imageDoc = await payload.create({
-        collection: 'media',
-        data: {
-          alt: `Product image ${i}`,
-        },
-        filePath: imagePath,
-      })
+  try {
+    const imageFiles = await Promise.all(imagePromises)
+    payload.logger.info(`✓ Successfully fetched ${imageFiles.length} images from Unsplash`)
 
-      productImages.push(imageDoc)
-      payload.logger.info(`✓ Image ${i}/8 uploaded successfully`)
-    } catch (error) {
-      payload.logger.error(`✗ Image ${i}/8 failed to upload: ${error}`)
+    // Create media documents
+    for (const [index, file] of imageFiles.entries()) {
+      try {
+        const imageDoc = await payload.create({
+          collection: 'media',
+          data: {
+            alt: `Product image ${index + 1}`,
+          },
+          file,
+        })
+        productImages.push(imageDoc)
+        payload.logger.info(`✓ Image ${index + 1}/8 uploaded successfully`)
+      } catch (error) {
+        payload.logger.error(`✗ Image ${index + 1}/8 failed to upload: ${error}`)
+      }
     }
-
-    // Small delay between uploads to avoid overwhelming the connection
-    await new Promise((resolve) => setTimeout(resolve, 500))
+  } catch (error) {
+    payload.logger.error(`✗ Failed to fetch images: ${error}`)
   }
+
   payload.logger.info(
     `— Image uploads completed. ${productImages.length}/8 images uploaded successfully.`,
   )
@@ -969,5 +986,31 @@ export const seed = async ({
   )
 
   payload.logger.info('Seeded database successfully!')
+}
+
+// Official Payload method for fetching files from URLs (from template)
+async function fetchFileByURL(url: string): Promise<{
+  name: string
+  data: Buffer
+  mimetype: string
+  size: number
+}> {
+  const res = await fetch(url, {
+    credentials: 'include',
+    method: 'GET',
+  })
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch file from ${url}, status: ${res.status}`)
+  }
+
+  const data = await res.arrayBuffer()
+
+  return {
+    name: url.split('/').pop() || `file-${Date.now()}`,
+    data: Buffer.from(data),
+    mimetype: `image/${url.split('.').pop()}`,
+    size: data.byteLength,
+  }
 }
 
